@@ -1,0 +1,36 @@
+#!/bin/sh -e
+
+PECL_NAME=##peclpackagename##
+PHP_VERSION=##phpversion##
+
+# Source debconf library.
+. /usr/share/debconf/confmodule
+
+if [ "$DPKG_DEBUG" = "developer" ]; then
+  set -x
+fi
+
+if [ "$1" != "remove" ] && [ "$1" != "purge" ]; then
+  exit 0
+fi
+
+##DEBHELPER##
+
+php5dismod $PECL_NAME
+
+exit 0
+
+# Restart apache(s) so settings get refreshed
+if [ -d /etc/php${PHP_VERSION}/apache/ ] || [ -d /etc/php${PHP_VERSION}/apache2/ ]; then
+	for srv in apache2 apache apache-ssl apache-perl; do
+		if [ -x "/etc/init.d/$srv" ]; then
+			if [ -x /usr/sbin/invoke-rc.d ]; then
+				/usr/sbin/invoke-rc.d $srv force-reload
+			else
+				/etc/init.d/$srv force-reload
+			fi
+		fi
+	done
+fi
+
+exit 0
